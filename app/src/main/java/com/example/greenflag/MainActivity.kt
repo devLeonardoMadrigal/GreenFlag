@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -248,6 +249,8 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
     var repeatedPasswordIsFocused by remember { mutableStateOf(false) }
     var isRepeatedPasswordVisible by remember { mutableStateOf(false) }
 
+    val nextButtonEnabled =
+        (validatePassword(password) && validateEmail(email) && (password == repeatedPassword))
 
     Column(
         modifier = Modifier
@@ -420,12 +423,13 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
                                         focusedContainerColor = Color.White,
                                         unfocusedContainerColor = Color.White,
                                         focusedIndicatorColor = colorResource(R.color.teal_700),
-                                        unfocusedIndicatorColor = if (validatePassword(
+                                        unfocusedIndicatorColor = if (!validatePassword(
                                                 repeatedPassword
-                                            )
+                                            ) && !repeatedPasswordIsFocused && (password == repeatedPassword) && repeatedPassword.length > 1
+
                                         ) colorResource(
                                             R.color.teal_700
-                                        ) else Color.Red,
+                                        ) else Color.Gray,
                                         errorIndicatorColor = Color.Red,
 
                                         ),
@@ -436,7 +440,7 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
                                             isRepeatedPasswordVisible = !isRepeatedPasswordVisible
                                         }) {
 
-                                            if (validatePassword(repeatedPassword) && !repeatedPasswordIsFocused && password == repeatedPassword) {
+                                            if (validatePassword(repeatedPassword) && !repeatedPasswordIsFocused && (password == repeatedPassword) && repeatedPassword.length > 1) {
                                                 Icon(
                                                     Icons.Default.Done,
                                                     contentDescription = "Repeated password is correct",
@@ -479,7 +483,7 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
                                 .width(400.dp)
                                 .height(100.dp)
                                 .clip(RoundedCornerShape(16.dp))
-                                .clickable {
+                                .clickable(enabled = nextButtonEnabled) {
                                     if (validatePassword(password)) {
                                         if (password == repeatedPassword) {
 
@@ -505,16 +509,20 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
 
 
                                 },
-                            contentAlignment = Alignment.Center
-                        ) {
+                            contentAlignment = Alignment.Center,
+
+                            ) {
                             Image(
                                 painter = painterResource(
-                                    R.drawable.gradient_button_background
+                                    R.drawable.gradient_button_background,
 
-                                ),
+                                    ),
                                 contentDescription = "Create an account",
                                 modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Crop,
+                                colorFilter = if (nextButtonEnabled) null else ColorFilter.tint(
+                                    Color.Gray
+                                )
 
                             )
                             Text(
