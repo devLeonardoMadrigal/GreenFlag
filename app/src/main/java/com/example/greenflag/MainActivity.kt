@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,6 +48,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.greenflag.ui.theme.GreenFlagTheme
@@ -90,11 +94,8 @@ class MainActivity : ComponentActivity() {
                                         onLogOut = { currentScreen = "HomeScreen" }
                                     )
                                     )
-
                         }
                     }
-
-
                 }
             }
         }
@@ -239,8 +240,11 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
     var emailIsFocused by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
     var passwordIsFocused by remember { mutableStateOf(false) }
+    var isPasswordVisible by remember { mutableStateOf(false) }
     var repeatedPassword by remember { mutableStateOf("") }
     var repeatedPasswordIsFocused by remember { mutableStateOf(false) }
+    var isRepeatedPasswordVisible by remember { mutableStateOf(false) }
+
 
     Column(
         modifier = Modifier
@@ -328,7 +332,20 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
                             Row(modifier = Modifier.padding(vertical = 5.dp)) {
                                 TextField(
                                     value = password,
+                                    visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                     onValueChange = { newText: String -> password = newText },
+                                    trailingIcon = {
+                                        val icon =
+                                            if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                                        IconButton(onClick = {
+                                            isPasswordVisible = !isPasswordVisible
+                                        }) {
+                                            Icon(
+                                                icon,
+                                                contentDescription = if (isPasswordVisible) "Hide password" else "Show password"
+                                            )
+                                        }
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .onFocusChanged() { focusState ->
@@ -353,6 +370,19 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
                                 TextField(
                                     value = repeatedPassword,
                                     onValueChange = { newText -> repeatedPassword = newText },
+                                    visualTransformation = if (isRepeatedPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                    trailingIcon = {
+                                        val icon =
+                                            if (isRepeatedPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                                        IconButton(onClick = {
+                                            isRepeatedPasswordVisible = !isRepeatedPasswordVisible
+                                        }) {
+                                            Icon(
+                                                icon,
+                                                contentDescription = if (isRepeatedPasswordVisible) "Hide repeated password" else "Show repeated password"
+                                            )
+                                        }
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .onFocusChanged() { focusState ->
