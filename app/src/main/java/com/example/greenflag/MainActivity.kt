@@ -31,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import com.example.greenflag.ui.theme.GreenFlagTheme
 
 class MainActivity : ComponentActivity() {
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,14 +64,37 @@ class MainActivity : ComponentActivity() {
                         .background(Color.Black)
                         .safeContentPadding()
                 ) { innerPadding ->
-                    HomeScreen(
-                        modifier = Modifier
-                            .background(Color.Black)
-                            .fillMaxSize()
-                            .padding(innerPadding)
+                    Box() {
+                        var currentScreen by remember { mutableStateOf("HomeScreen") }
+                        when (currentScreen) {
+
+                            "HomeScreen" -> HomeScreen(
+                                modifier = Modifier
+                                    .background(Color.Black)
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                                onCreateAccountNavigation = {
+                                    currentScreen = "CreateAccountScreen"
+                                }
+                            )
+
+                            "CreateAccountScreen" -> (
+                                    CreateAccountScreen(
+                                        onGoBack = { currentScreen = "HomeScreen" },
+                                        onAccountCreated = { currentScreen = "UserScreen" })
+
+                                    )
+
+                            "UserScreen" -> (
+                                    UserScreen(
+                                        onLogOut = { currentScreen = "HomeScreen" }
+                                    )
+                                    )
+
+                        }
+                    }
 
 
-                    )
                 }
             }
         }
@@ -76,20 +102,14 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun HomeScreen(modifier: Modifier) {
-
-    var showCreateAccountScreen by remember { mutableStateOf(false) }
+fun HomeScreen(modifier: Modifier, onCreateAccountNavigation: () -> Unit) {
 
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceAround
     ) {
-        if (showCreateAccountScreen) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                CreateAccountScreen(onGoBack = { showCreateAccountScreen = false })
-            }
-        }
+
 
         Row(
             modifier = Modifier
@@ -189,7 +209,7 @@ fun HomeScreen(modifier: Modifier) {
                     .height(100.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .clickable {
-                        showCreateAccountScreen = true
+                        onCreateAccountNavigation()
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -211,23 +231,17 @@ fun HomeScreen(modifier: Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateAccountScreen(onGoBack: () -> Unit) {
-    var showLoggedInScreen by remember { mutableStateOf(false) }
+fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
 
     val context = LocalContext.current
 
     var email by remember { mutableStateOf("") }
+    var emailIsFocused by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
+    var passwordIsFocused by remember { mutableStateOf(false) }
     var repeatedPassword by remember { mutableStateOf("") }
+    var repeatedPasswordIsFocused by remember { mutableStateOf(false) }
 
-    if (showLoggedInScreen) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            UserScreen(onGoBack = {
-                showLoggedInScreen = false
-                onGoBack()
-            }, userEmail = email)
-        }
-    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -235,19 +249,29 @@ fun CreateAccountScreen(onGoBack: () -> Unit) {
     ) {
         Scaffold(
             modifier = Modifier.background(Color.Black),
+
             topBar = {
                 TopAppBar(
                     modifier = Modifier,
                     navigationIcon = {
-                        IconButton(onClick = onGoBack, modifier = Modifier) {
+                        IconButton(
+                            onClick = onGoBack,
+                            modifier = Modifier
+                                .background(Color.Black)
+                        ) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
+                                contentDescription = "Back",
+                                tint = Color.Green,
                             )
 
                         }
                     },
-                    title = { Text("Create an account", color = Color.Red) },
+                    title = { Text("Create an account", color = Color.White, fontSize = 24.sp) },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Black,
+                        titleContentColor = Color.Green
+                    )
                 )
             },
             content = {
@@ -257,85 +281,125 @@ fun CreateAccountScreen(onGoBack: () -> Unit) {
                         .padding(it)
                         .background(Color.Black)
                 ) {
-                    Row() {
-                        Column() {
-                            Row() {
-                                Text("Email Address", color = Color.White)
+                    Row(
+                        modifier = Modifier
+                            .padding(vertical = 5.dp)
+                    ) {
+                        Column(
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(vertical = 5.dp)
+                            ) {
+                                CustomText("Email Address:")
                             }
-                            Row() {
+                            Row(
+                                modifier = Modifier
+                                    .padding(vertical = 5.dp)
+                            ) {
                                 TextField(
                                     value = email,
                                     onValueChange = { newText ->
                                         email = newText
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .onFocusChanged() { focusState ->
+                                            emailIsFocused = focusState.isFocused
+                                        },
+                                    supportingText = {
+                                        if (!validateEmail(email) && email.length > 1 && !emailIsFocused) {
+                                            Text("Email is incorrect", color = Color.Red)
+                                        }
                                     }
                                 )
                             }
                         }
                     }
-                    Row() {
+                    Row(
+                        modifier = Modifier
+                            .padding(vertical = 5.dp)
+                            .fillMaxWidth()
+                    ) {
                         Column() {
-                            Row() {
-                                Text("Create password", color = Color.White)
+                            Row(modifier = Modifier.padding(vertical = 5.dp)) {
+                                CustomText("Create password")
                             }
-                            Row() {
+                            Row(modifier = Modifier.padding(vertical = 5.dp)) {
                                 TextField(
                                     value = password,
-                                    onValueChange = { newText -> password = newText }
+                                    onValueChange = { newText: String -> password = newText },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .onFocusChanged() { focusState ->
+                                            passwordIsFocused = focusState.isFocused
+                                        },
+                                    supportingText = {
+                                        if (!validatePassword(password) && password.length > 1 && !passwordIsFocused) {
+                                            Text("Error with password", color = Color.Red)
+                                        }
+                                    }
+
                                 )
                             }
                         }
                     }
-                    Row() {
+                    Row(modifier = Modifier.padding(vertical = 5.dp)) {
                         Column() {
-                            Row() {
-                                Text("Repeat password", color = Color.White)
+                            Row(modifier = Modifier.padding(vertical = 5.dp)) {
+                                CustomText("Repeat password")
                             }
-                            Row() {
+                            Row(modifier = Modifier.padding(vertical = 5.dp)) {
                                 TextField(
                                     value = repeatedPassword,
-                                    onValueChange = { newText -> repeatedPassword = newText }
+                                    onValueChange = { newText -> repeatedPassword = newText },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .onFocusChanged() { focusState ->
+                                            repeatedPasswordIsFocused = focusState.isFocused
+                                        },
+                                    supportingText = {
+                                        if (!repeatedPasswordIsFocused && (repeatedPassword != password) && repeatedPassword.isNotEmpty()) {
+                                            Text("Passwords don't match", color = Color.Red)
+                                        }
+                                    }
                                 )
                             }
                         }
                     }
-                    Row() {
-                        Text("Your password should have a minimum of 8 \ncharacters and contain at least one number, one uppercase and one lower case letter. You can use special characters.")
+                    Row(modifier = Modifier.padding(vertical = 5.dp)) {
+                        Text(
+                            "Your password should have a minimum of 8 \ncharacters and contain at least one number, one uppercase and one lower case letter. You can use special characters.",
+                            color = Color.White
+                        )
                     }
-                    Row() {
+                    Row(modifier = Modifier.padding(vertical = 5.dp)) {
+
                         Box(
                             modifier = Modifier
                                 .width(400.dp)
                                 .height(100.dp)
                                 .clip(RoundedCornerShape(16.dp))
                                 .clickable {
-                                    if (email.contains("@") && email.contains(".com")) {
-                                        if (validatePassword(password)) {
-                                            if (password == repeatedPassword) {
+                                    if (validatePassword(password)) {
+                                        if (password == repeatedPassword) {
 
-                                                Toast.makeText(
-                                                    context, "Your account has been created",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                                showLoggedInScreen = true
-                                                onGoBack()
-
-                                            } else {
-                                                Toast.makeText(
-                                                    context, "Passwords do not match",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                            }
+                                            Toast.makeText(
+                                                context, "Your account has been created",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            onAccountCreated()
 
                                         } else {
                                             Toast.makeText(
-                                                context, "Password is not valid",
+                                                context, "Passwords do not match",
                                                 Toast.LENGTH_LONG
                                             ).show()
                                         }
 
                                     } else {
                                         Toast.makeText(
-                                            context, "Email is in an incorrect format",
+                                            context, "Password is not valid",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     }
@@ -345,10 +409,14 @@ fun CreateAccountScreen(onGoBack: () -> Unit) {
                             contentAlignment = Alignment.Center
                         ) {
                             Image(
-                                painter = painterResource(R.drawable.gradient_button_background),
+                                painter = painterResource(
+                                    R.drawable.gradient_button_background
+
+                                ),
                                 contentDescription = "Create an account",
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
+
                             )
                             Text(
                                 "Next",
@@ -365,51 +433,47 @@ fun CreateAccountScreen(onGoBack: () -> Unit) {
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserScreen(onGoBack: () -> Unit, userEmail: String) {
-
+fun UserScreen(onLogOut: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Scaffold(
-            modifier = Modifier.background(Color.Black),
-            topBar = {
-                TopAppBar(
-                    modifier = Modifier,
-                    navigationIcon = {
-                        IconButton(onClick = onGoBack, modifier = Modifier) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-
-                        }
-                    },
-                    title = { Text("Welcome $userEmail", color = Color.Red) },
-                )
-            },
-            content = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(it)
-                        .background(Color.Black)
-                ) {
-                    Row() {
-                        Column() {
-                            Text("This is the logged in page, you just created an account!")
-                        }
-                    }
-                    Row() {
-                        Button(onClick = onGoBack) { }
-                    }
-                }
-            })
+        Row(
+            modifier = Modifier
+                .padding(10.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                "This is the logged in page, you just created an account!",
+                color = Color.White,
+                fontSize = 18.sp
+            )
+        }
+        Row(
+            modifier = Modifier
+                .padding(10.dp)
+                .fillMaxWidth()
+        ) {
+            Button(onClick = onLogOut, modifier = Modifier.padding(32.dp)) {
+                Text("LOG OUT", fontSize = 18.sp)
+            }
+        }
     }
+}
+
+@Composable
+fun CustomText(text: String) {
+    Text(
+        text = text,
+        color = Color.White,
+        fontSize = 27.sp,
+    )
 }
 
 fun validatePassword(password: String): Boolean {
@@ -422,5 +486,8 @@ fun validatePassword(password: String): Boolean {
     return true
 }
 
+fun validateEmail(email: String): Boolean {
+    return email.contains("@") && email.contains(".com")
+}
 
 
