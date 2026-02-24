@@ -23,15 +23,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -46,6 +48,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -301,10 +304,31 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
                                 modifier = Modifier
                                     .padding(vertical = 5.dp)
                             ) {
-                                TextField(
+                                OutlinedTextField(
                                     value = email,
+
                                     onValueChange = { newText ->
                                         email = newText
+                                    },
+                                    isError = (!validateEmail(email) && !emailIsFocused && email.length > 1),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedIndicatorColor = colorResource(R.color.teal_700),
+                                        unfocusedIndicatorColor = if (validateEmail(email)) colorResource(
+                                            R.color.teal_700
+                                        ) else Color.Gray,
+                                        errorIndicatorColor = Color.Red,
+                                    ),
+                                    trailingIcon = {
+                                        if (validateEmail(email)) {
+                                            Icon(
+                                                Icons.Default.Done,
+                                                contentDescription = "Email is correct",
+                                                tint = colorResource(R.color.teal_700),
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -330,20 +354,40 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
                                 CustomText("Create password")
                             }
                             Row(modifier = Modifier.padding(vertical = 5.dp)) {
-                                TextField(
+                                OutlinedTextField(
                                     value = password,
                                     visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                     onValueChange = { newText: String -> password = newText },
+                                    isError = (!validatePassword(password) && !passwordIsFocused && password.length > 1),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedIndicatorColor = colorResource(R.color.teal_700),
+                                        unfocusedIndicatorColor = if (validatePassword(password)) colorResource(
+                                            R.color.teal_700
+                                        ) else Color.Gray,
+                                        errorIndicatorColor = Color.Red,
+
+                                        ),
                                     trailingIcon = {
                                         val icon =
                                             if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                                         IconButton(onClick = {
                                             isPasswordVisible = !isPasswordVisible
                                         }) {
-                                            Icon(
-                                                icon,
-                                                contentDescription = if (isPasswordVisible) "Hide password" else "Show password"
-                                            )
+                                            if (validatePassword(password) && !passwordIsFocused) {
+                                                Icon(
+                                                    Icons.Default.Done,
+                                                    contentDescription = "Email is correct",
+                                                    tint = colorResource(R.color.teal_700),
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            } else {
+                                                Icon(
+                                                    icon,
+                                                    contentDescription = if (isPasswordVisible) "Hide password" else "Show password"
+                                                )
+                                            }
                                         }
                                     },
                                     modifier = Modifier
@@ -367,20 +411,45 @@ fun CreateAccountScreen(onGoBack: () -> Unit, onAccountCreated: () -> Unit) {
                                 CustomText("Repeat password")
                             }
                             Row(modifier = Modifier.padding(vertical = 5.dp)) {
-                                TextField(
+                                OutlinedTextField(
                                     value = repeatedPassword,
                                     onValueChange = { newText -> repeatedPassword = newText },
                                     visualTransformation = if (isRepeatedPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                    isError = (!validatePassword(repeatedPassword) && !repeatedPasswordIsFocused && repeatedPassword.length > 1),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedIndicatorColor = colorResource(R.color.teal_700),
+                                        unfocusedIndicatorColor = if (validatePassword(
+                                                repeatedPassword
+                                            )
+                                        ) colorResource(
+                                            R.color.teal_700
+                                        ) else Color.Red,
+                                        errorIndicatorColor = Color.Red,
+
+                                        ),
                                     trailingIcon = {
                                         val icon =
                                             if (isRepeatedPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                                         IconButton(onClick = {
                                             isRepeatedPasswordVisible = !isRepeatedPasswordVisible
                                         }) {
-                                            Icon(
-                                                icon,
-                                                contentDescription = if (isRepeatedPasswordVisible) "Hide repeated password" else "Show repeated password"
-                                            )
+
+                                            if (validatePassword(repeatedPassword) && !repeatedPasswordIsFocused && password == repeatedPassword) {
+                                                Icon(
+                                                    Icons.Default.Done,
+                                                    contentDescription = "Repeated password is correct",
+                                                    tint = colorResource(R.color.teal_700),
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            } else {
+                                                Icon(
+                                                    icon,
+                                                    contentDescription = if (isRepeatedPasswordVisible) "Hide repeated password" else "Show repeated password"
+                                                )
+                                            }
+
                                         }
                                     },
                                     modifier = Modifier
